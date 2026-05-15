@@ -110,6 +110,7 @@ All season-specific parameters live in src/flu_report/config.py.
 **Edit SEASON_START and SEASON_END (first Sunday → last Saturday) each September.**
 
 ```{powershell}
+$Env:ILINET_DOWNLOAD_DIR = "$PWD\downloads"
 python -m flu_report.main --year 2026
 ```
 
