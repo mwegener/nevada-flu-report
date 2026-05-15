@@ -84,11 +84,7 @@ $env:Path += ';C:\Program Files\R\R-4.5.2\bin\x64'
 
 ### Create & activate a Python virtual-environment
 ```{powershell}
-python -m venv .venv
-. .\.venv\Scripts\Activate.ps1        # Windows PowerShell
-# (or: .venv\Scripts\activate.bat in cmd, or source .venv/bin/activate on macOS/Linux)
-
- python -m venv .venv  
+python -m venv .venv  
 ```
 
 
