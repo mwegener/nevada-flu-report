@@ -1,11 +1,10 @@
-# Nevada Flu Report — Portable Repository
-
-Self-contained analytics suite that
+# Nevada Flu Report Code repository
 
 1. Generates Nevada’s weekly influenza‐surveillance figures & tables  
    (`flu_report` pipeline).  
 2. Uploads ESSENCE hospital data to ILINet and downloads QA extracts  
    (`essence_to_ilinet` pipeline).
+3. Redcap upload
 
 Everything (Python **and** R) ships **inside** the repo, so you do *not* need
 
@@ -15,136 +14,112 @@ Everything (Python **and** R) ships **inside** the repo, so you do *not* need
 
 ---
 
-## 1  Folder map
+## Folder map
 
 ```{text}
 nevada-flu-report/
 │
-├─ run_flu_report.bat              ← one-click Windows launcher
-├─ .venv/                          ← Python 3 virtualenv + packages
-├─ tools/
-│   └─ R-4.4.0/                    ← portable R + CRAN deps
+├─ run_flu_report.bat          # One-click Windows launcher (calls the venv)
 │
-├─ src/
-│   ├─ flu_report/                 ← weekly report pipeline
-│   │   └─ …                       ← (existing)
-│   └─ essence_to_ilinet/          ← NEW: ESSENCE → ILINet uploader
+├─ .venv/                      # Python virtual-environment  ← git-ignored
+│   └─ …                       #
+│
+├─ tools/                      # Third-party runtimes you ship with the repo
+│   └─ R-4.5.2/                # Portable R + required CRAN packages
+│
+├─ src/                        # Editable source code (PEP 517/518 layout)
+│   ├─ flu_report/             # Weekly report pipeline          (existing)
+│   │   └─ …                   #
+│   │
+│   └─ essence_to_ilinet/      # NEW: ESSENCE → ILINet uploader
 │       ├─ __init__.py
-│       ├─ main.py                 ← `python -m essence_to_ilinet …`
-│       ├─ pipeline.py             ← full workflow logic
-│       ├─ facility_map.py         ← hospital-ID lookup table
-│       └─ requirements.txt        ← sub-package pins (mirrors root)
+│       ├─ main.py             # `python -m essence_to_ilinet …`
+│       ├─ pipeline.py         # End-to-end workflow
+│       ├─ facility_map.py     # Hospital-ID lookup table
+│       └─ requirements.txt    # Extra pins (mirrors root)
 │
-├─ outputs/    ← ILINet template TXT files (auto)
-└─ downloads/  ← QA CSVs & other artifacts (auto)
+├─ outputs/                    # ILINet template TXT files (auto-generated)
+├─ downloads/                  # QA CSVs & other artefacts (auto-generated)
+└─ README.md
 ```
 
 
-## 2  One-time workstation setup (no admin rights)
+## One-time workstation setup (no admin rights)
 
 ### Get the code
 
-```{powershell}
-# Option A: download the ZIP release and unzip
-# Option B: clone
-git clone https://github.com/your-org/nevada-flu-report.git
+```{text}
+Download the ZIP release and unzip from 
+https://github.com/your-org/nevada-flu-report.git
 ```
 
 ### Set credentials as user environment variables
 **You only need to do this once per machine / Windows account**
 
 ```{powershell}
-#  ESSENCE API
-setx ESSENCE_USER "your_essence_username"
-setx ESSENCE_PASS "your_essence_password"
+cd C:\where\you\unzipped\nevada-flu-report
+notepad .env          # or use VS Code / any editor
+```
 
-#  ILINet web portal
-setx ILINET_USER  "your_ilinet_username"
-setx ILINET_PASS  "your_ilinet_password"
+**Add the following lines to the `.env` file, replacing the placeholders with your actual credentials.**
+```{text}
+# .env  – DO NOT commit this file to GitHub
+ESSENCE_USER=my_essence_username
+ESSENCE_PASS=my_essence_password
 
-#  REDCap API (for flu_report pipeline)
-setx REDCAP_TOKEN "your_redcap_token"
-setx REDCAP_URL   "redcap_url"
+ILINET_USER=my_ilinet_username
+ILINET_PASS=my_ilinet_password
+
+REDCAP_TOKEN=my_redcap_token
+REDCAP_URL=https://redcap.yourdomain.org/api/
+```
+
+### Make Rscript discoverable
+```{powershell}
+#(adjust the path if your R version or install folder is different)
+
+$env:Path += ';C:\Program Files\R\R-4.5.2\bin\x64'
 ```
 
 
-### Activate the bundled virtualenv
-**You only need to do this once per machine / Windows account**
+### Create & activate a Python virtual-environment
 ```{powershell}
-# Change directory then uncomment the line below to activate the Python virtualenv (one-time setup)
-#cd C:\projects\nevada-flu-report
-& .\.venv\Scripts\Activate.ps1
+python -m venv .venv
+. .\.venv\Scripts\Activate.ps1        # Windows PowerShell
+# (or: .venv\Scripts\activate.bat in cmd, or source .venv/bin/activate on macOS/Linux)
+
+ python -m venv .venv  
 ```
 
-### Install Playwright’s browser binaries
-**first run only**
+
+### Install Python dependencies + editable package
 ```{powershell}
+python -m pip install -U pip
+python -m pip install -e .
+python -m pip install -r src/essence_to_ilinet/requirements.txt
+python -m pip install playwright
 python -m playwright install chromium
 ```
 
+## Run the report generator
+
+### flu_report pipeline
+
+All season-specific parameters live in src/flu_report/config.py.
+
+**Edit SEASON_START and SEASON_END (first Sunday → last Saturday) each September.**
 
 ```{powershell}
-setx RSCRIPT "C:\Program Files\R\R-4.5.2\bin\x64\Rscript.exe"
+python -m flu_report.main --year 2026
 ```
 
-
-## 3  Run the pipelines
-
-### Flu report generation
-```{powershell}
-.\run_flu_report.bat --year 2026
-
-.\run_pipeline.bat flu --year 2026
-
-.\run_pipeline.bat ilinet --start 28Sep2025 --end 11Oct2025
-
-run_flu_report.bat --year 2025          # or omit --year for current season
-```
-
-The batch file
-
-1. Activates .venv/
-2. Adds portable R (tools/R-4.4.0/bin/x64) to the session
-3. Executes python -m flu_report.main …
-
-Products land in downloads\YEAR\ (figures, tables, PDF).
-
-### ESSENCE → ILINet uploader
-```{powershell}
-python -m essence_to_ilinet `
-       --start 10Aug2025 `
-       --end   28Feb2026 `
-       --facilities "geography=16435&geography=16436&…"   # optional; default is demo single site
-```
-
-What happens:
-
+### essence_to_ilinet pipeline
 1. Downloads ESSENCE CSV for the date range & facilities
 2. Builds ILINet TXT template in outputs/ESSENCE_ILINet_YYYY-MM-DD.txt
 3. Logs into ILINet, uploads the TXT, downloads ILI & Lab QA CSVs
 4. Saves QA files to downloads/ with today’s date in the filename
-
-## Updating tools (maintainers)
-
-### Portable R
-1. Replace tools/R-* with a newer portable ZIP.
-2. Edit the hard-coded path in run_flu_report.bat **and**
-src/flu_report/utils.py (LOCAL_R constant).
-
-### Python dependencies
 ```{powershell}
-& .\.venv\Scripts\Activate.ps1
-pip install -U -r requirements.txt
-python -m playwright install chromium   # rerun if Playwright version changed
-deactivate
+python -m essence_to_ilinet `
+       --start 10Aug2025 `
+       --end   28Feb2026
 ```
-
-## Troubleshooting
-
-Symptom	// Fix Cause
-
-* Rscript not found // Always run via run_flu_report.bat
-* Playwright says “browser executable not found” // Forgot python -m playwright install chromium
-* SSL / proxy errors // Run on a network that allows HTTPS to CDC / NSSP
-* “Permission denied” writing to downloads // Close any Excel/Explorer window using the file
-* Need to re-run ESSENCE uploader for another wk // Change --start/--end dates and rerun

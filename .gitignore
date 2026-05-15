@@ -30,3 +30,20 @@ logs/
 .DS_Store
 Thumbs.db
 ~$*
+
+# ─── Auto-generated ILINet & report files ───────────────────────────────
+outputs/
+
+# ─── Playwright browser binaries (installed at runtime) ─────────────────
+playwright/.local-browsers/
+
+# ─── Test / coverage caches (if you use pytest, coverage, mypy) ─────────
+.pytest_cache/
+.coverage
+.mypy_cache/
+
+# ─── Jupyter & VS Code notebooks / checkpoints (optional) ───────────────
+.ipynb_checkpoints/
+
+# ─── JetBrains IDE config (optional) ────────────────────────────────────
+.idea/
