@@ -81,6 +81,11 @@ REDCAP_URL=https://redcap.yourdomain.org/api/
 $env:Path += ';C:\Program Files\R\R-4.5.2\bin\x64'
 ```
 
+### check if python is installed
+```{powershell}
+(Get-Command python).Path
+```
+if this throws an error, you can install Python from the Microsoft Store (no admin rights needed) or from https://www.python.org/downloads/windows/ (select the "executable installer" and check "Add Python to PATH" during setup).
 
 ### Create & activate a Python virtual-environment
 ```{powershell}
