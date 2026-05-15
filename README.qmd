@@ -1,0 +1,150 @@
+# Nevada Flu Report — Portable Repository
+
+Self-contained analytics suite that
+
+1. Generates Nevada’s weekly influenza‐surveillance figures & tables  
+   (`flu_report` pipeline).  
+2. Uploads ESSENCE hospital data to ILINet and downloads QA extracts  
+   (`essence_to_ilinet` pipeline).
+
+Everything (Python **and** R) ships **inside** the repo, so you do *not* need
+
+* Administrator rights  
+* Anything on your system `PATH`  
+* A separate R or Python install  
+
+---
+
+## 1  Folder map
+
+```{text}
+nevada-flu-report/
+│
+├─ run_flu_report.bat              ← one-click Windows launcher
+├─ .venv/                          ← Python 3 virtualenv + packages
+├─ tools/
+│   └─ R-4.4.0/                    ← portable R + CRAN deps
+│
+├─ src/
+│   ├─ flu_report/                 ← weekly report pipeline
+│   │   └─ …                       ← (existing)
+│   └─ essence_to_ilinet/          ← NEW: ESSENCE → ILINet uploader
+│       ├─ __init__.py
+│       ├─ main.py                 ← `python -m essence_to_ilinet …`
+│       ├─ pipeline.py             ← full workflow logic
+│       ├─ facility_map.py         ← hospital-ID lookup table
+│       └─ requirements.txt        ← sub-package pins (mirrors root)
+│
+├─ outputs/    ← ILINet template TXT files (auto)
+└─ downloads/  ← QA CSVs & other artifacts (auto)
+```
+
+
+## 2  One-time workstation setup (no admin rights)
+
+### Get the code
+
+```{powershell}
+# Option A: download the ZIP release and unzip
+# Option B: clone
+git clone https://github.com/your-org/nevada-flu-report.git
+```
+
+### Set credentials as user environment variables
+**You only need to do this once per machine / Windows account**
+
+```{powershell}
+#  ESSENCE API
+setx ESSENCE_USER "your_essence_username"
+setx ESSENCE_PASS "your_essence_password"
+
+#  ILINet web portal
+setx ILINET_USER  "your_ilinet_username"
+setx ILINET_PASS  "your_ilinet_password"
+
+#  REDCap API (for flu_report pipeline)
+setx REDCAP_TOKEN "your_redcap_token"
+setx REDCAP_URL   "redcap_url"
+```
+
+
+### Activate the bundled virtualenv
+**You only need to do this once per machine / Windows account**
+```{powershell}
+# Change directory then uncomment the line below to activate the Python virtualenv (one-time setup)
+#cd C:\projects\nevada-flu-report
+& .\.venv\Scripts\Activate.ps1
+```
+
+### Install Playwright’s browser binaries
+**first run only**
+```{powershell}
+python -m playwright install chromium
+```
+
+
+```{powershell}
+setx RSCRIPT "C:\Program Files\R\R-4.5.2\bin\x64\Rscript.exe"
+```
+
+
+## 3  Run the pipelines
+
+### Flu report generation
+```{powershell}
+.\run_flu_report.bat --year 2026
+
+.\run_pipeline.bat flu --year 2026
+
+.\run_pipeline.bat ilinet --start 28Sep2025 --end 11Oct2025
+
+run_flu_report.bat --year 2025          # or omit --year for current season
+```
+
+The batch file
+
+1. Activates .venv/
+2. Adds portable R (tools/R-4.4.0/bin/x64) to the session
+3. Executes python -m flu_report.main …
+
+Products land in downloads\YEAR\ (figures, tables, PDF).
+
+### ESSENCE → ILINet uploader
+```{powershell}
+python -m essence_to_ilinet `
+       --start 10Aug2025 `
+       --end   28Feb2026 `
+       --facilities "geography=16435&geography=16436&…"   # optional; default is demo single site
+```
+
+What happens:
+
+1. Downloads ESSENCE CSV for the date range & facilities
+2. Builds ILINet TXT template in outputs/ESSENCE_ILINet_YYYY-MM-DD.txt
+3. Logs into ILINet, uploads the TXT, downloads ILI & Lab QA CSVs
+4. Saves QA files to downloads/ with today’s date in the filename
+
+## Updating tools (maintainers)
+
+### Portable R
+1. Replace tools/R-* with a newer portable ZIP.
+2. Edit the hard-coded path in run_flu_report.bat **and**
+src/flu_report/utils.py (LOCAL_R constant).
+
+### Python dependencies
+```{powershell}
+& .\.venv\Scripts\Activate.ps1
+pip install -U -r requirements.txt
+python -m playwright install chromium   # rerun if Playwright version changed
+deactivate
+```
+
+## Troubleshooting
+
+Symptom	// Fix Cause
+
+* Rscript not found // Always run via run_flu_report.bat
+* Playwright says “browser executable not found” // Forgot python -m playwright install chromium
+* SSL / proxy errors // Run on a network that allows HTTPS to CDC / NSSP
+* “Permission denied” writing to downloads // Close any Excel/Explorer window using the file
+* Need to re-run ESSENCE uploader for another wk // Change --start/--end dates and rerun

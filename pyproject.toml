@@ -1,0 +1,19 @@
+[project]
+name = "flu-report"
+version = "0.1.0"
+description = "Automates Nevada influenza surveillance data pulls"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas",
+    "python-dotenv",
+    "requests"
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["flu_report"]

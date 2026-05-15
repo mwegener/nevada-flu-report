@@ -1,0 +1,32 @@
+# ─── Secrets ────────────────────────────────────────────────────────────
+.env
+
+# ─── Python virtual environment ─────────────────────────────────────────
+.venv/
+# If you ever use Poetry:
+# .venv  (Poetry might create it without the leading dot)
+
+# ─── Byte-code / cache ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# ─── Editor settings (optional) ─────────────────────────────────────────
+.vscode/
+
+# ─── Build & packaging artefacts ────────────────────────────────────────
+dist/
+build/
+*.egg-info/
+
+# ─── Data & outputs you don’t want in Git ───────────────────────────────
+downloads/
+data/
+logs/
+
+# ─── OS / OneDrive cruft ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+~$*
