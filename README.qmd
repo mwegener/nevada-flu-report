@@ -115,6 +115,11 @@ $Env:ILINET_DOWNLOAD_DIR = "$PWD\downloads"
 python -m flu_report.main --year 2026
 ```
 
+
+**Stop here unless you are Richa**
+
+# Richa Only!
+
 ### essence_to_ilinet pipeline
 1. Downloads ESSENCE CSV for the date range & facilities
 2. Builds ILINet TXT template in outputs/ESSENCE_ILINet_YYYY-MM-DD.txt
